@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+recursive-include netbox_plugin_skeleton/templates *
+recursive-include netbox_plugin_skeleton/static *
