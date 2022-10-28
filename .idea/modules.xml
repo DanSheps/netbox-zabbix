@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/netbox-plugin-skeleton.iml" filepath="$PROJECT_DIR$/.idea/netbox-plugin-skeleton.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/netbox-zabbix.iml" filepath="$PROJECT_DIR$/.idea/netbox-zabbix.iml" />
     </modules>
   </component>
 </project>
