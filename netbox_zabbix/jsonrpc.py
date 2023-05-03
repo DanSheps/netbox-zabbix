@@ -75,6 +75,7 @@ class JSONRPC:
                 return response
         else:
             logger.warning(f"JSONRPC: Request failed; response status {response.status_code}: {response.content}")
+            logger.debug(f'JSONRPC Result Payload: {data}')
             raise requests.exceptions.RequestException(
                 f"Status {response.status_code} returned with content '{response.content}'"
             )

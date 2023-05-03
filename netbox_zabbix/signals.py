@@ -14,18 +14,21 @@ logger = logging.getLogger('netbox.plugins.netbox_zabbix')
 
 
 def can_do_update(instance):
-    if instance.get_config_context().get('zabbix', {}).get('group', None) and \
+    if instance.get_config_context().get('zabbix', {}).get('groups', None) and \
             instance.device_type.custom_field_data.get('zabbix_group') == '':
-        logger.debug(f'Zabbix({instance.name}): Appropriate groups not set')
+        logger.debug(f'Zabbix({instance}): Appropriate groups not set')
         return False
 
     if not instance.primary_ip:
+        logger.debug(f'Zabbix({instance}): Missing primary IP')
         return False
 
     if not instance.name:
+        logger.debug(f'Zabbix({instance}): Missing name')
         return False
 
     tag_names = settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('tags', None)
+    logger.debug(f'{tag_names}')
     if tag_names is not None:
         if not isinstance(tag_names, list):
             tag_names = [tag_names]
