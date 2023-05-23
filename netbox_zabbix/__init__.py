@@ -14,11 +14,8 @@ class ZabbixPlugin(PluginConfig):
     min_version = '3.2.0'
     max_version = '3.5.99'
     required_settings = [
-        'tags',
         'username',
         'password',
-        'snmp',
-        'group'
     ]
     default_settings = {
         'tags': ['automation: monitoring'],
