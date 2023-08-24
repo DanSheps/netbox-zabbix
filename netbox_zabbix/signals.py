@@ -9,13 +9,22 @@ from netbox import settings
 from extras.models import Tag, TaggedItem
 from dcim.models import Device
 from netbox_zabbix.zabbix import Zabbix
+from virtualization.models import VirtualMachine
 
 logger = logging.getLogger('netbox.plugins.netbox_zabbix')
 
 
 def can_do_update(instance):
-    if instance.get_config_context().get('zabbix', {}).get('groups', None) and \
-            instance.device_type.custom_field_data.get('zabbix_group') == '':
+    if (
+        (
+            isinstance(instance, Device) and
+            instance.get_config_context().get('zabbix', {}).get('groups', None) and
+            instance.device_type.custom_field_data.get('zabbix_group') == ''
+        ) or (
+            isinstance(instance, VirtualMachine) and
+            not instance.get_config_context().get('zabbix', {}).get('groups', None)
+        )
+    ):
         logger.debug(f'Zabbix({instance}): Appropriate groups not set')
         return False
 
@@ -54,18 +63,31 @@ def update_hostid(zabbix, device, name=None):
         device.custom_field_data['zabbix_hostid'] = int(host.get('hostid'))
         device.save()
     else:
-        logger.error(f'Zabbix({device.name}): Host ID not set and unable to locate host in Zabbix')
+        logger.info(f'Zabbix({device.name}): Host ID not set and unable to locate host in Zabbix')
         return
 
-def update_zabbix(pk, hostid=None):
+def update_zabbix_device(pk, hostid=None):
     try:
         instance = Device.objects.get(pk=pk)
     except Device.DoesNotExist:
         logger.error(f'Zabbix({pk}): Device Instance not found')
         return
 
+    update_zabbix(instance=instance, hostid=hostid)
+
+def update_zabbix_vm(pk, hostid=None):
+    try:
+        instance = VirtualMachine.objects.get(pk=pk)
+    except Device.DoesNotExist:
+        logger.error(f'Zabbix({pk}): Device Instance not found')
+        return
+
+    update_zabbix(instance=instance, hostid=hostid)
+
+def update_zabbix(instance, hostid=None):
+
     status = 0
-    if instance.status in ['offline', 'planned', 'inventory', 'staged']:
+    if instance.status in ['offline', 'planned', 'inventory', 'staged', 'decommissioning']:
         status = 1
 
     if hasattr(instance, '_prechange_snapshot') and instance.name != instance._prechange_snapshot.get('name'):
@@ -84,9 +106,21 @@ def update_zabbix(pk, hostid=None):
             instance.refresh_from_db()
             hostid = instance.custom_field_data.get('zabbix_hostid', None)
 
-        template = zabbix.template_get(instance.device_type.get_full_name)
+        if isinstance(instance, Device):
+            template = zabbix.template_get(instance.device_type.get_full_name)
+        else:
+            template = zabbix.template_get(instance.platform.name)
+
         if template is None:
-            template = zabbix.template_get(f'{instance.device_type.manufacturer.name} {instance.device_type.part_number}')
+            if isinstance(instance, Device):
+                template = zabbix.template_get(
+                    f'{instance.device_type.manufacturer.name} {instance.device_type.part_number}'
+                )
+            else:
+                template = zabbix.template_get(
+                    f'{instance.platform}'
+                )
+
 
         group = instance.get_config_context().get('zabbix', {}).get('groups', [])
         group.extend(instance.get_config_context().get('zabbix', {}).get('tenants', []))
@@ -97,7 +131,7 @@ def update_zabbix(pk, hostid=None):
             groups.append({'groupid': f"{settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('group', None)}"})
         if template:
             logger.info(f'Zabbix({instance.name}): Starting update')
-            zabbix.host_update(
+            result = zabbix.host_update(
                 hostid=instance.custom_field_data.get('zabbix_hostid', None),
                 name=instance.name,
                 ip=f'{instance.primary_ip.address.ip}',
@@ -112,6 +146,7 @@ def update_zabbix(pk, hostid=None):
             elif hostid and not zabbix.host_get(hostid=hostid):
                 update_hostid(zabbix, instance, old_name)
 
+            logger.info(result)
             logger.info(f'Zabbix({instance.name}): Complete for {instance.name}')
         else:
             logger.error(f'Zabbix({instance.name}): No template set ("{instance.device_type.get_full_name}") ')
@@ -134,15 +169,15 @@ def update_device(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        logger.error(f'No update available for {instance}')
+        logger.info(f'No update available for {instance}')
 
-@receiver(m2m_changed, sender=TaggedItem)
-def m2m_device(instance, **kwargs):
-    if kwargs.get('action', None) not in ['post_add'] or not kwargs.get('pk_set') or not isinstance(instance, Device) \
-            or hasattr(instance, 'skip_signal') and instance.skip_signal:
+
+@receiver(post_save, sender=VirtualMachine)
+def update_device(instance, **kwargs):
+    if hasattr(instance, 'skip_signal') and instance.skip_signal:
         return
     if can_do_update(instance):
-        logger.debug('NetBox Zabbix: Hit M2M')
+        logger.debug('NetBox Zabbix: Hit Signal')
         queue = get_queue('high')
         job = queue.enqueue(
             'netbox_zabbix.signals.update_zabbix',
@@ -150,4 +185,35 @@ def m2m_device(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        logger.error(f'No update available for {instance}')
+        logger.info(f'No update available for {instance}')
+
+@receiver(m2m_changed, sender=TaggedItem)
+def m2m_device(instance, **kwargs):
+    if (
+            kwargs.get('action', None) not in ['post_add'] or
+            not kwargs.get('pk_set') or
+            (
+                not isinstance(instance, Device) and not isinstance(instance, VirtualMachine)
+            )
+            or hasattr(instance, 'skip_signal') and
+            instance.skip_signal
+    ):
+        return
+    if can_do_update(instance) and isinstance(instance, Device):
+        logger.debug('NetBox Zabbix: Hit M2M - Device')
+        queue = get_queue('high')
+        job = queue.enqueue(
+            'netbox_zabbix.signals.update_zabbix_device',
+            description=f'zabbix_update-{instance.name}',
+            pk=instance.pk,
+        )
+    elif can_do_update(instance) and isinstance(instance, VirtualMachine):
+        logger.debug('NetBox Zabbix: Hit M2M - VirtualMachine')
+        queue = get_queue('high')
+        job = queue.enqueue(
+            'netbox_zabbix.signals.update_zabbix_vm',
+            description=f'zabbix_update-{instance.name}',
+            pk=instance.pk,
+        )
+    else:
+        logger.info(f'No update available for {instance}')
