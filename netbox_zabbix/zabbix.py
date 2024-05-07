@@ -125,6 +125,7 @@ class Zabbix:
             data['params'].update({'ip': f'{ip}'})
         response = self.jsonrpc.send_api_request(data)
         result = response.json()
+        return result
 
     def host_get(self, host=None, hostid=None):
         if hostid:
@@ -176,6 +177,7 @@ class Zabbix:
 
             response = self.jsonrpc.send_api_request(data)
             result = response.json()
+            return result
         else:
             raise Exception('Cannot Create: Host Exists')
 
@@ -205,6 +207,8 @@ class Zabbix:
 
             if ip and interface.get('ip', None) != ip:
                 # Only update interface if IP doesn't match
-                self.hostinterface_update(hostid=hostid, interfaceid=interface.get('interfaceid'), ip=ip)
+                result['interface'] = self.hostinterface_update(hostid=hostid, interfaceid=interface.get('interfaceid'), ip=ip)
+
+            return result
         else:
-            self.host_create(name, ip, templates, groups, type, main, port, snmp)
+            return self.host_create(name, ip, templates, groups, type, main, port, snmp)
