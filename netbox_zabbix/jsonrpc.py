@@ -37,7 +37,7 @@ class JSONRPC:
             data['jsonrpc'] = '2.0'
 
         headers = {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json-rpc',
         }
         body = json.dumps(data, cls=json.JSONEncoder)
         # Prepare the HTTP request
@@ -47,6 +47,8 @@ class JSONRPC:
             'headers': headers,
             'data': body.encode('utf8'),
         }
+        logger.debug(f'JSON Post: {self.url}')
+        logger.debug(f'\t{body}')
 
         try:
             prepared_request = requests.Request(**params).prepare()
@@ -90,7 +92,7 @@ class JSONRPC:
             'jsonrpc': '2.0',
             'method': 'user.login',
             'params': {
-                'user': self.username,
+                'username': self.username,
                 'password': self.password
             },
             'id': self.id,
