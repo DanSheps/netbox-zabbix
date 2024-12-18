@@ -12,7 +12,7 @@ class ZabbixPlugin(PluginConfig):
     author_email = metadata.get('Author-email')
     base_url = 'zabbix'
     min_version = '4.0.0'
-    max_version = '4.0.99'
+    max_version = '4.1.99'
     required_settings = [
         'username',
         'password',
@@ -35,7 +35,6 @@ class ZabbixPlugin(PluginConfig):
 
     def ready(self):
         super().ready()
-        import netbox_zabbix.signals
-
+        from netbox_zabbix.signals import m2m_device, update_vm, update_device
 
 config = ZabbixPlugin
