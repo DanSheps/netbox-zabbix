@@ -12,7 +12,7 @@ class ZabbixPlugin(PluginConfig):
     author_email = metadata.get('Author-email')
     base_url = 'zabbix'
     min_version = '4.0.0'
-    max_version = '4.1.99'
+    max_version = '4.2.99'
     required_settings = [
         'username',
         'password',
