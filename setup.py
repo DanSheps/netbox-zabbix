@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='netbox_zabbix',
-    version='2.0.0',
+    version='2.0.1',
     description='NetBox Zabbix Sync',
     long_description='Plugin to Sync to Zabbix',
     url='https://github.com/dansheps/netbox-zabbix/',
