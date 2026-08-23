@@ -88,4 +88,4 @@ class ZabbixSNMP(NetBoxModel):
         return '---Global---'
 
     def get_absolute_url(self):
-        return reverse('plugins:netbox_zabbix:zabbixsnmp', args=[self.pk])\
+        return reverse('plugins:netbox_zabbix:zabbixsnmp', args=[self.pk])

@@ -69,3 +69,37 @@ Confiuration context could look like:
 
 * Separate model for storing Zabbix information (instead of custom field)
 * Separate model for storing configuration information (Remove config contexts, configuration parameters)
+---
+
+## Fork: NetBox 4.5 compatibility
+
+Этот форк адаптирован для **NetBox 4.5.x**:
+
+### Изменения
+1. **`max_version`** в `netbox_zabbix/__init__.py`: `4.2.99` → `4.6.99` (поддержка NetBox 4.5.7)
+2. **Исправлены обрезанные файлы** (в оригинале 2.0.3):
+   - `models/device.py` — метод `get_absolute_url()` завершён (был обрезан на `\`)
+   - `models/snmp.py` — метод `get_absolute_url()` завершён (был обрезан на `\`)
+
+### Установка форка
+```bash
+git clone https://github.com/pbolkhovitin/netbox-zabbix.git
+cd netbox-zabbix
+pip install .
+```
+
+### Конфигурация (PLUGINS_CONFIG)
+```python
+PLUGINS = ['netbox_zabbix']
+PLUGINS_CONFIG = {
+    'netbox_zabbix': {
+        'url': 'http://<zabbix-host>/api_jsonrpc.php',
+        'username': '<zabbix-user>',
+        'password': '<zabbix-password>',
+    },
+}
+```
+
+### Известные ограничения
+- Проверено на NetBox 4.5.7 / Python 3.13
+- Полный набор файлов (signals, utilities) — синхронизация при изменении устройств работает
