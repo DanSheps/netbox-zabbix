@@ -17,13 +17,13 @@ class Zabbix:
 
         if not settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('url', None):
             logger.error(f'Zabbix: No Zabbix URL configured')
-            return False
+            return
         elif not settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('username', None):
             logger.error(f'Zabbix: No Zabbix username configured')
-            return False
+            return
         elif not settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('password', None):
             logger.error(f'Zabbix: No Zabbix password configured')
-            return False
+            return
         else:
             self.url = settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('url', None)
             self.username =  settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('username', None)

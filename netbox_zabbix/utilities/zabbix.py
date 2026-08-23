@@ -52,14 +52,16 @@ def update_zabbix(instance, hostid=None):
             hostid = instance.custom_field_data.get('zabbix_hostid', None)
 
         if isinstance(instance, Device):
-            template = zabbix.template_get(instance.device_type.full_name)
+            tpl_name = instance.device_type.full_name.replace('/', '-').replace('+', '-')
+            template = zabbix.template_get(tpl_name)
         else:
             template = zabbix.template_get(instance.platform.name)
 
         if template is None:
             if isinstance(instance, Device):
+                tpl_name = f'{instance.device_type.manufacturer.name} {instance.device_type.part_number}'
                 template = zabbix.template_get(
-                    f'{instance.device_type.manufacturer.name} {instance.device_type.part_number}'
+                    tpl_name.replace('/', '-').replace('+', '-')
                 )
             else:
                 template = zabbix.template_get(
@@ -77,9 +79,9 @@ def update_zabbix(instance, hostid=None):
         else:
             name = instance.name
         for gid in group:
-            groups.append({'groupid': f"{gid}"})
+            groups.append({'groupid': int(gid)})
         if len(groups) == 0:
-            groups.append({'groupid': f"{settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('group', None)}"})
+            groups.append({'groupid': settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('group', None)})
         if template:
             logger.info(f'Zabbix({instance.name}): Starting update')
             result = zabbix.host_update(
