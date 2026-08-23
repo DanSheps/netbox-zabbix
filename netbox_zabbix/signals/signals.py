@@ -1,6 +1,6 @@
 import logging
 
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from django_rq import get_queue
 
@@ -14,6 +14,7 @@ from netbox_zabbix.utilities.helper import can_do_update
 __all__ = (
     'update_device',
     'update_vm',
+    'delete_device',
     'm2m_device'
 )
 
@@ -38,6 +39,20 @@ def update_device(instance, **kwargs):
         logger.info(f'No update available for {instance}')
 
 
+@receiver(post_delete, sender=Device)
+def delete_device(instance, **kwargs):
+    """Удалить хост из Zabbix при удалении устройства из NetBox."""
+    hostid = instance.custom_field_data.get('zabbix_hostid', None)
+    logger.debug(f'NetBox Zabbix: Delete Signal for {instance.name} (hostid={hostid})')
+    queue = get_queue('high')
+    job = queue.enqueue(
+        'netbox_zabbix.jobs.delete_zabbix_device',
+        description=f'zabbix_delete-{instance.name}',
+        hostid=hostid,
+        name=instance.name,
+    )
+
+
 @receiver(post_save, sender=VirtualMachine)
 def update_vm(instance, **kwargs):
     if hasattr(instance, 'skip_signal') and instance.skip_signal:
@@ -55,30 +70,45 @@ def update_vm(instance, **kwargs):
         logger.info(f'No update available for {instance}')
 
 
-@receiver(m2m_changed, sender=VirtualMachine)
+@receiver(m2m_changed, sender=Device)
 def m2m_device(instance, **kwargs):
-    if (
-            kwargs.get('action', None) not in ['post_add'] or
-            not kwargs.get('pk_set') or
-            (
-                not isinstance(instance, Device) and not isinstance(instance, VirtualMachine)
-            )
-            or
-            (
-                hasattr(instance, 'skip_signal') and instance.skip_signal
-            )
-    ):
+    action = kwargs.get('action', None)
+    # Реагируем на добавление И удаление тегов (вкл. тег monitored)
+    if action not in ['post_add', 'post_remove']:
         return
-    if can_do_update(instance) and isinstance(instance, Device):
-        logger.debug('NetBox Zabbix: Hit M2M - Device')
+    if hasattr(instance, 'skip_signal') and instance.skip_signal:
+        return
+
+    if can_do_update(instance):
+        logger.debug(f'NetBox Zabbix: Hit M2M ({action}) - Device {instance.name}')
         queue = get_queue('high')
         job = queue.enqueue(
             'netbox_zabbix.jobs.update_zabbix_device',
             description=f'zabbix_update-{instance.name}',
             pk=instance.pk,
         )
-    elif can_do_update(instance) and isinstance(instance, VirtualMachine):
-        logger.debug('NetBox Zabbix: Hit M2M - VirtualMachine')
+    else:
+        # Устройство больше не соответствует тегам (monitored снят) — удалить из Zabbix
+        logger.debug(f'NetBox Zabbix: Device {instance.name} no longer matches tags, deleting')
+        queue = get_queue('high')
+        job = queue.enqueue(
+            'netbox_zabbix.jobs.delete_zabbix_device',
+            description=f'zabbix_delete-{instance.name}',
+            hostid=instance.custom_field_data.get('zabbix_hostid', None),
+            name=instance.name,
+        )
+
+
+@receiver(m2m_changed, sender=VirtualMachine)
+def m2m_vm(instance, **kwargs):
+    action = kwargs.get('action', None)
+    if action not in ['post_add', 'post_remove']:
+        return
+    if hasattr(instance, 'skip_signal') and instance.skip_signal:
+        return
+
+    if can_do_update(instance):
+        logger.debug(f'NetBox Zabbix: Hit M2M ({action}) - VM {instance.name}')
         queue = get_queue('high')
         job = queue.enqueue(
             'netbox_zabbix.jobs.update_zabbix_vm',
@@ -86,4 +116,10 @@ def m2m_device(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        logger.info(f'No update available for {instance}')
+        queue = get_queue('high')
+        job = queue.enqueue(
+            'netbox_zabbix.jobs.delete_zabbix_vm',
+            description=f'zabbix_delete-{instance.name}',
+            hostid=instance.custom_field_data.get('zabbix_hostid', None),
+            name=instance.name,
+        )

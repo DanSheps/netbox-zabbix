@@ -2,7 +2,7 @@ import logging
 
 from dcim.models import Device
 from netbox import settings
-from netbox_zabbix.utilities.helper import snmp_details
+from netbox_zabbix.utilities.helper import snmp_details, slugify_name
 
 from netbox_zabbix.zabbix import Zabbix
 
@@ -36,9 +36,9 @@ def update_zabbix(instance, hostid=None):
         old_name = instance._prechange_snapshot.get('name')
     else:
         if isinstance(instance, Device) and instance.virtual_chassis and instance.virtual_chassis.name:
-            old_name = instance.virtual_chassis.name
+            old_name = slugify_name(instance.virtual_chassis.name)
         else:
-            old_name = instance.name
+            old_name = slugify_name(instance.name)
     try:
         zabbix = Zabbix()
         snmp = snmp_details(device=instance)
@@ -75,9 +75,9 @@ def update_zabbix(instance, hostid=None):
         logger.info(f'Zabbix({instance.name}): Selected Groups')
         groups = []
         if isinstance(instance, Device) and instance.virtual_chassis and instance.virtual_chassis.name:
-            name = instance.virtual_chassis.name
+            name = slugify_name(instance.virtual_chassis.name)
         else:
-            name = instance.name
+            name = slugify_name(instance.name)
         for gid in group:
             groups.append({'groupid': int(gid)})
         if len(groups) == 0:

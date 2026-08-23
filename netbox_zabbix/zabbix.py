@@ -212,3 +212,27 @@ class Zabbix:
             return result
         else:
             return self.host_create(name, ip, templates, groups, type, main, port, snmp)
+
+    def host_delete(self, hostid=None, name=None):
+        """Удалить хост из Zabbix (по hostid или по имени)."""
+        host = None
+        if hostid:
+            host = self.host_get(hostid=hostid)
+        elif name:
+            host = self.host_get(host=name)
+        else:
+            logger.error('host_delete: neither hostid nor name provided')
+            return {'error': 'no hostid/name'}
+
+        if not host:
+            logger.info(f'host_delete: host not found (hostid={hostid}, name={name})')
+            return {'result': 'not found'}
+
+        data = {
+            'method': 'host.delete',
+            'params': [host['hostid']],
+        }
+        response = self.jsonrpc.send_api_request(data)
+        result = response.json()
+        logger.info(f'host_delete: {result}')
+        return result

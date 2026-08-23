@@ -1,4 +1,5 @@
 import logging
+import re
 
 from dcim.models import Device
 from extras.models import Tag
@@ -9,10 +10,35 @@ from virtualization.models import VirtualMachine
 __all__ = (
     'can_do_update',
     'snmp_details',
+    'slugify_name',
 )
 
 
 logger = logging.getLogger('netbox.plugins.netbox_zabbix')
+
+
+# Транслитерация кириллицы → латиница (Zabbix не принимает не-ASCII в именах хостов)
+_TRANSLIT = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E',
+    'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+    'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch',
+    'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+}
+
+
+def slugify_name(name):
+    """Транслитерировать кириллицу и привести к формату, допустимому в Zabbix (A-Za-z0-9._-)."""
+    if not name:
+        return name
+    out = ''.join(_TRANSLIT.get(c, c) for c in name)
+    out = re.sub(r'[^A-Za-z0-9._\-]', '-', out)
+    return out
 
 
 def can_do_update(instance):
