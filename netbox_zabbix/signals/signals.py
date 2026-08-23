@@ -36,7 +36,15 @@ def update_device(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        logger.info(f'No update available for {instance}')
+        # Устройство не соответствует тегам/условиям — удалить хост из Zabbix, если он был создан
+        logger.info(f'No update available for {instance}, scheduling delete')
+        queue = get_queue('high')
+        job = queue.enqueue(
+            'netbox_zabbix.jobs.delete_zabbix_device',
+            description=f'zabbix_delete-{instance.name}',
+            hostid=instance.custom_field_data.get('zabbix_hostid', None),
+            name=instance.name,
+        )
 
 
 @receiver(post_delete, sender=Device)
@@ -67,7 +75,14 @@ def update_vm(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        logger.info(f'No update available for {instance}')
+        logger.info(f'No update available for {instance}, scheduling delete')
+        queue = get_queue('high')
+        job = queue.enqueue(
+            'netbox_zabbix.jobs.delete_zabbix_vm',
+            description=f'zabbix_delete-{instance.name}',
+            hostid=instance.custom_field_data.get('zabbix_hostid', None),
+            name=instance.name,
+        )
 
 
 @receiver(m2m_changed, sender=Device)

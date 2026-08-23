@@ -4,6 +4,7 @@ from dcim.models import Device
 from virtualization.models import VirtualMachine
 
 from netbox_zabbix.zabbix import Zabbix
+from netbox_zabbix.utilities.helper import slugify_name
 from netbox_zabbix.utilities.zabbix import update_zabbix
 
 __all__ = (
@@ -40,7 +41,8 @@ def update_zabbix_vm(pk, hostid=None):
 def delete_zabbix_device(hostid=None, name=None):
     try:
         zabbix = Zabbix()
-        result = zabbix.host_delete(hostid=hostid, name=name)
+        # Имя хоста в Zabbix — транслитерированное, а не исходное (кириллица недопустима)
+        result = zabbix.host_delete(hostid=hostid, name=slugify_name(name) if name else None)
         logger.info(f'Zabbix delete ({name}): {result}')
     except Exception as e:
         logger.error(f'Zabbix delete ({name}): Exception: {e}')

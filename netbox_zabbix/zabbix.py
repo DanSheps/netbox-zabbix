@@ -56,32 +56,31 @@ class Zabbix:
 
     @staticmethod
     def build_interface(snmp, ip):
+        # Всегда создавать SNMP-интерфейс: если community не задан — использовать public
+        interfaces = []
+        interface_type = 2
+        main = 1
+        port = '161'
+        community = '{$SNMP_COMMUNITY}'
         if snmp:
-            interfaces = []
-            interface_type = 2
-            main = 1
-            port = '161'
             if snmp.get('version', None) == '2' or snmp.get('version', None) == '2c':
-                interfaces.append({
-                    'type': interface_type,
-                    'main': main,
-                    'useip': 1,
-                    'ip': ip,
-                    'dns': '',
-                    'port': port,
-                        'details': {
-                        'version': 2,
-                        'bulk': 0,
-                        'community': '{$SNMP_COMMUNITY}'
-                    }
-                })
-
-            if len(interfaces) > 0:
-                return {'interfaces': interfaces}
-            else:
-                return {}
-        else:
-            return {}
+                community = '{$SNMP_COMMUNITY}'
+            if snmp.get('community'):
+                community = snmp['community']
+        interfaces.append({
+            'type': interface_type,
+            'main': main,
+            'useip': 1,
+            'ip': ip,
+            'dns': '',
+            'port': port,
+            'details': {
+                'version': 2,
+                'bulk': 0,
+                'community': community,
+            }
+        })
+        return {'interfaces': interfaces}
 
     @staticmethod
     def build_macro(name, value):
@@ -169,11 +168,11 @@ class Zabbix:
                     "status": status,
                 },
             }
-            if ip and snmp:
+            if ip:
                 data['params'].update(self.build_interface(snmp=snmp, ip=ip))
-            if snmp:
-                community = snmp.get('community')
-                data['params'].update(self.build_macro('SNMP_COMMUNITY', community))
+            # SNMP community: из config context или по умолчанию public
+            community = snmp.get('community') if snmp else 'public'
+            data['params'].update(self.build_macro('SNMP_COMMUNITY', community))
 
             response = self.jsonrpc.send_api_request(data)
             result = response.json()
