@@ -130,3 +130,6 @@ dmypy.json
 
 # InteliJ
 .idea
+# opencode working files (local, not for PR)
+.opencode/
+AGENTS.md
