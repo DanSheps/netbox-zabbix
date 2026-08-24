@@ -56,7 +56,7 @@ class Zabbix:
 
     @staticmethod
     def build_interface(snmp, ip):
-        # Всегда создавать SNMP-интерфейс: если community не задан — использовать public
+        # Always create an SNMP interface: use public if no community is set
         interfaces = []
         interface_type = 2
         main = 1
@@ -170,7 +170,7 @@ class Zabbix:
             }
             if ip:
                 data['params'].update(self.build_interface(snmp=snmp, ip=ip))
-            # SNMP community: из config context или по умолчанию public
+            # SNMP community: from config context or default public
             community = snmp.get('community') if snmp else 'public'
             data['params'].update(self.build_macro('SNMP_COMMUNITY', community))
 
@@ -213,7 +213,7 @@ class Zabbix:
             return self.host_create(name, ip, templates, groups, type, main, port, snmp)
 
     def host_delete(self, hostid=None, name=None):
-        """Удалить хост из Zabbix (по hostid или по имени)."""
+        """Delete host from Zabbix (by hostid or by name)."""
         host = None
         if hostid:
             host = self.host_get(hostid=hostid)

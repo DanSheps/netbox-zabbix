@@ -73,22 +73,22 @@ Confiuration context could look like:
 
 ## Fork: NetBox 4.5 compatibility
 
-Этот форк адаптирован для **NetBox 4.5.x**:
+This fork is adapted for **NetBox 4.5.x**:
 
-### Изменения
-1. **`max_version`** в `netbox_zabbix/__init__.py`: `4.2.99` → `4.6.99` (поддержка NetBox 4.5.7)
-2. **Исправлены обрезанные файлы** (в оригинале 2.0.3):
-   - `models/device.py` — метод `get_absolute_url()` завершён (был обрезан на `\`)
-   - `models/snmp.py` — метод `get_absolute_url()` завершён (был обрезан на `\`)
+### Changes
+1. **`max_version`** in `netbox_zabbix/__init__.py`: `4.2.99` → `4.6.99` (NetBox 4.5.7 support)
+2. **Fixed truncated files** (broken in the original 2.0.3):
+   - `models/device.py` — `get_absolute_url()` completed (was truncated at `\`)
+   - `models/snmp.py` — `get_absolute_url()` completed (was truncated at `\`)
 
-### Установка форка
+### Fork installation
 ```bash
 git clone https://github.com/pbolkhovitin/netbox-zabbix.git
 cd netbox-zabbix
 pip install .
 ```
 
-### Конфигурация (PLUGINS_CONFIG)
+### Configuration (PLUGINS_CONFIG)
 ```python
 PLUGINS = ['netbox_zabbix']
 PLUGINS_CONFIG = {
@@ -100,6 +100,6 @@ PLUGINS_CONFIG = {
 }
 ```
 
-### Известные ограничения
-- Проверено на NetBox 4.5.7 / Python 3.13
-- Полный набор файлов (signals, utilities) — синхронизация при изменении устройств работает
+### Known limitations
+- Tested on NetBox 4.5.7 / Python 3.13
+- Full file set (signals, utilities) — sync on device changes works

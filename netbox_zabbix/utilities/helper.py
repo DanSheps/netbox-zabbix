@@ -17,7 +17,7 @@ __all__ = (
 logger = logging.getLogger('netbox.plugins.netbox_zabbix')
 
 
-# Транслитерация кириллицы → латиница (Zabbix не принимает не-ASCII в именах хостов)
+# Cyrillic-to-Latin transliteration (Zabbix rejects non-ASCII host names)
 _TRANSLIT = {
     'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
     'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
@@ -33,7 +33,7 @@ _TRANSLIT = {
 
 
 def slugify_name(name):
-    """Транслитерировать кириллицу и привести к формату, допустимому в Zabbix (A-Za-z0-9._-)."""
+    """Transliterate Cyrillic and normalize to a Zabbix-compatible format (A-Za-z0-9._-)."""
     if not name:
         return name
     out = ''.join(_TRANSLIT.get(c, c) for c in name)

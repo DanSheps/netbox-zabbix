@@ -51,9 +51,9 @@ def update_zabbix(instance, hostid=None):
             instance.refresh_from_db()
             hostid = instance.custom_field_data.get('zabbix_hostid', None)
 
-        # Приоритет шаблона:
-        # 1. Явный шаблон из PLUGINS_CONFIG['template'] (если задан) — применяется ко ВСЕМ устройствам
-        # 2. Шаблон по модели устройства (device_type.full_name)
+        # Template priority:
+        # 1. Explicit template from PLUGINS_CONFIG['template'] (if set) — applied to ALL devices
+        # 2. Template by device model (device_type.full_name)
         cfg_tpl = settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('template', None)
         if cfg_tpl:
             template = zabbix.template_get(cfg_tpl)

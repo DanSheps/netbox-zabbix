@@ -41,7 +41,7 @@ def update_zabbix_vm(pk, hostid=None):
 def delete_zabbix_device(hostid=None, name=None):
     try:
         zabbix = Zabbix()
-        # Имя хоста в Zabbix — транслитерированное, а не исходное (кириллица недопустима)
+        # Host name in Zabbix is transliterated, not the original (Cyrillic is not allowed)
         result = zabbix.host_delete(hostid=hostid, name=slugify_name(name) if name else None)
         logger.info(f'Zabbix delete ({name}): {result}')
     except Exception as e:

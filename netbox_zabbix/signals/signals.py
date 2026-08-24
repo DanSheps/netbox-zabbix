@@ -36,7 +36,7 @@ def update_device(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        # Устройство не соответствует тегам/условиям — удалить хост из Zabbix, если он был создан
+        # Device no longer matches tags/conditions — delete host from Zabbix if it was created
         logger.info(f'No update available for {instance}, scheduling delete')
         queue = get_queue('high')
         job = queue.enqueue(
@@ -49,7 +49,7 @@ def update_device(instance, **kwargs):
 
 @receiver(post_delete, sender=Device)
 def delete_device(instance, **kwargs):
-    """Удалить хост из Zabbix при удалении устройства из NetBox."""
+    """Delete host from Zabbix when device is deleted from NetBox."""
     hostid = instance.custom_field_data.get('zabbix_hostid', None)
     logger.debug(f'NetBox Zabbix: Delete Signal for {instance.name} (hostid={hostid})')
     queue = get_queue('high')
@@ -88,7 +88,7 @@ def update_vm(instance, **kwargs):
 @receiver(m2m_changed, sender=Device)
 def m2m_device(instance, **kwargs):
     action = kwargs.get('action', None)
-    # Реагируем на добавление И удаление тегов (вкл. тег monitored)
+    # React to both tag add AND remove (including the monitored tag)
     if action not in ['post_add', 'post_remove']:
         return
     if hasattr(instance, 'skip_signal') and instance.skip_signal:
@@ -103,7 +103,7 @@ def m2m_device(instance, **kwargs):
             pk=instance.pk,
         )
     else:
-        # Устройство больше не соответствует тегам (monitored снят) — удалить из Zabbix
+        # Device no longer matches tags (monitored removed) — delete from Zabbix
         logger.debug(f'NetBox Zabbix: Device {instance.name} no longer matches tags, deleting')
         queue = get_queue('high')
         job = queue.enqueue(
