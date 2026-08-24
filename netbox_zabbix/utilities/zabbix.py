@@ -51,13 +51,20 @@ def update_zabbix(instance, hostid=None):
             instance.refresh_from_db()
             hostid = instance.custom_field_data.get('zabbix_hostid', None)
 
-        if isinstance(instance, Device):
+        # Приоритет шаблона:
+        # 1. Явный шаблон из PLUGINS_CONFIG['template'] (если задан) — применяется ко ВСЕМ устройствам
+        # 2. Шаблон по модели устройства (device_type.full_name)
+        cfg_tpl = settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('template', None)
+        if cfg_tpl:
+            template = zabbix.template_get(cfg_tpl)
+            logger.info(f'Zabbix({instance.name}): Using configured template "{cfg_tpl}"')
+        elif isinstance(instance, Device):
             tpl_name = instance.device_type.full_name.replace('/', '-').replace('+', '-')
             template = zabbix.template_get(tpl_name)
         else:
             template = zabbix.template_get(instance.platform.name)
 
-        if template is None:
+        if template is None and not cfg_tpl:
             if isinstance(instance, Device):
                 tpl_name = f'{instance.device_type.manufacturer.name} {instance.device_type.part_number}'
                 template = zabbix.template_get(
