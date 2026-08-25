@@ -9,11 +9,43 @@ from netbox_zabbix.zabbix import Zabbix
 
 __all__ = (
     'update_zabbix',
-    'update_hostid'
+    'update_hostid',
+    'build_inventory'
 )
 
 
 logger = logging.getLogger('netbox.plugins.netbox_zabbix')
+
+
+def build_inventory(instance):
+    """Build Zabbix inventory dict from NetBox device data.
+
+    NetBox is the source of truth: device_type -> model, serial -> serialno_a,
+    site/location -> location, role -> type, manufacturer -> vendor.
+    Note: Zabbix 7.0 API ignores name/model/serialno_a/location on host.update,
+    so these fields are only applied on host.create. Other fields are writable
+    on both create and update.
+    """
+    if not isinstance(instance, Device):
+        return None
+    inventory = {}
+    if instance.device_type and instance.device_type.model:
+        inventory['model'] = instance.device_type.model
+    if instance.serial:
+        inventory['serialno_a'] = instance.serial
+    if instance.asset_tag:
+        inventory['asset_tag'] = instance.asset_tag
+    if instance.location and instance.location.name:
+        inventory['location'] = instance.location.name
+    elif instance.site and instance.site.name:
+        inventory['location'] = instance.site.name
+    if instance.role and instance.role.name:
+        inventory['type'] = instance.role.name
+    if instance.device_type and instance.device_type.manufacturer:
+        inventory['vendor'] = instance.device_type.manufacturer.name
+    if instance.name:
+        inventory['name'] = instance.name
+    return inventory or None
 
 def update_hostid(zabbix, device, name=None):
     host = zabbix.host_get(host=name)
@@ -99,6 +131,7 @@ def update_zabbix(instance, hostid=None):
                 groups=groups,
                 snmp=snmp,
                 status=status,
+                inventory=build_inventory(instance),
             )
 
             if not hostid:

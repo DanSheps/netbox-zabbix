@@ -147,7 +147,7 @@ class Zabbix:
 
         return result.get('result', []).pop()
 
-    def host_create(self, name, ip, templates, groups, type=2, main=1, port=161, snmp={}, status=0):
+    def host_create(self, name, ip, templates, groups, type=2, main=1, port=161, snmp={}, status=0, inventory=None):
         host = self.host_get(host=name)
 
         if not host:
@@ -161,6 +161,8 @@ class Zabbix:
                     "status": status,
                 },
             }
+            if inventory:
+                data['params']['inventory'] = inventory
             if ip:
                 data['params'].update(self.build_interface(snmp=snmp, ip=ip))
             # SNMP community: from config context or default public
@@ -173,7 +175,7 @@ class Zabbix:
         else:
             raise Exception('Cannot Create: Host Exists')
 
-    def host_update(self, hostid, name, ip, templates, groups, type=2, main=1, port=161, snmp={}, status=0):
+    def host_update(self, hostid, name, ip, templates, groups, type=2, main=1, port=161, snmp={}, status=0, inventory=None):
         host = None
         if hostid:
             host = self.host_get(hostid=hostid)
@@ -192,6 +194,10 @@ class Zabbix:
                     'status': status,
                 },
             }
+            if inventory:
+                # Zabbix 7.0 API ignores name/model/serialno_a/location on host.update;
+                # only inventory_mode=1 hosts accept the rest. Pass what is writable.
+                data['params']['inventory'] = inventory
             # Preserve proxy binding: if the host is already on a proxy, do not reset proxy_hostid
             # (host.update without proxy_hostid resets it to 0)
             current_proxy = host.get('proxy_hostid')
@@ -208,7 +214,7 @@ class Zabbix:
 
             return result
         else:
-            return self.host_create(name, ip, templates, groups, type, main, port, snmp)
+            return self.host_create(name, ip, templates, groups, type, main, port, snmp, inventory)
 
     def host_delete(self, hostid=None, name=None):
         """Delete host from Zabbix (by hostid or by name)."""
