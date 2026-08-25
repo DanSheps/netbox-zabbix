@@ -127,23 +127,16 @@ class Zabbix:
         return result
 
     def host_get(self, host=None, hostid=None):
+        params = {
+            'output': ['host', 'hostid', 'proxy_hostid', 'status'],
+            'selectInterfaces': ['interfaceid', 'ip'],
+        }
         if hostid:
-            data = {
-                'method': 'host.get',
-                'params': {
-                    'hostids': [int(hostid)]
-                },
-            }
+            params['hostids'] = [int(hostid)]
         else:
-            data = {
-                'method': 'host.get',
-                'params': {
-                    "filter": {
-                        "host": host
-                    }
-                },
-            }
+            params['filter'] = {'host': host}
 
+        data = {'method': 'host.get', 'params': params}
         response = self.jsonrpc.send_api_request(data)
         result = response.json()
 
@@ -199,6 +192,11 @@ class Zabbix:
                     'status': status,
                 },
             }
+            # Preserve proxy binding: if the host is already on a proxy, do not reset proxy_hostid
+            # (host.update without proxy_hostid resets it to 0)
+            current_proxy = host.get('proxy_hostid')
+            if current_proxy:
+                data['params']['proxy_hostid'] = current_proxy
             if snmp:
                 data['params'].update(self.build_macro('SNMP_COMMUNITY', snmp.get('community', None)))
             response = self.jsonrpc.send_api_request(data)
