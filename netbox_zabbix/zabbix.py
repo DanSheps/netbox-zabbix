@@ -61,8 +61,8 @@ class Zabbix:
             interface_type = 2
             main = 1
             port = '161'
-            if snmp.get('version', None) == '2' or snmp.get('version', None) == '2c':
-                interfaces.append({
+            if snmp.get('version', None) == '2' or snmp.get('version', None) == '2c' or snmp.get('version', None) == '3':
+                data = {
                     'type': interface_type,
                     'main': main,
                     'useip': 1,
@@ -70,12 +70,12 @@ class Zabbix:
                     'dns': '',
                     'port': port,
                         'details': {
-                        'version': 2,
-                        'bulk': 0,
-                        'community': '{$SNMP_COMMUNITY}'
                     }
-                })
-
+                }
+                for key, value in  snmp.items():
+                    data['details'][key] = value
+                interfaces.append(data)
+            logger.debug(f'\t\t{interfaces}')
             if len(interfaces) > 0:
                 return {'interfaces': interfaces}
             else:
@@ -114,7 +114,7 @@ class Zabbix:
 
         return result.get('result', []).pop()
 
-    def hostinterface_update(self, hostid, interfaceid, ip=None):
+    def hostinterface_update(self, hostid, interfaceid, ip=None, snmp={}):
         data = {
             'method': 'hostinterface.update',
             'params': {
@@ -123,6 +123,10 @@ class Zabbix:
         }
         if ip:
             data['params'].update({'ip': f'{ip}'})
+        for key, value in snmp.items():
+            if data['params'].get('details') is None:
+                data['params']['details'] = {}
+            data['params']['details'][key] = value
         response = self.jsonrpc.send_api_request(data)
         result = response.json()
         return result
@@ -170,7 +174,9 @@ class Zabbix:
                 },
             }
             if ip and snmp:
+                logger.info(f'\tZabbix: Building Host Interface for {name} with IP {ip} and SNMP {snmp}')
                 data['params'].update(self.build_interface(snmp=snmp, ip=ip))
+                logger.debug(f'\tZabbix: {data["params"]}')
             if snmp:
                 community = snmp.get('community')
                 data['params'].update(self.build_macro('SNMP_COMMUNITY', community))
@@ -205,9 +211,16 @@ class Zabbix:
             response = self.jsonrpc.send_api_request(data)
             result = response.json()
 
-            if ip and interface.get('ip', None) != ip:
+            logger.info(
+                f'\t\tZabbix: Current IP: {interface.get("ip", None)} | Desired IP: {ip}'
+            )
+            logger.info(
+                f'\t\tZabbix: Current SNMP Version: {interface.get("details", {}).get("version", None)} | Desired SNMP Version: {snmp.get("version", 2)}'
+            )
+            if ip and interface.get('ip', None) != ip or interface.get('details', {}).get('version', None) != snmp.get('version', 2):
                 # Only update interface if IP doesn't match
-                result['interface'] = self.hostinterface_update(hostid=hostid, interfaceid=interface.get('interfaceid'), ip=ip)
+                logger.info(f'\tZabbix: Updating Host Interface {hostid} due to mismatch in IP or SNMP version')
+                result['interface'] = self.hostinterface_update(hostid=hostid, interfaceid=interface.get('interfaceid'), ip=ip, snmp=snmp)
 
             return result
         else:

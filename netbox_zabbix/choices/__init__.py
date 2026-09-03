@@ -1,4 +1,5 @@
 from .snmp import *
+from .zabbix import *
 
 
 __all__ = (
@@ -6,4 +7,7 @@ __all__ = (
     'SNMPPrivChoices',
     'SNMPSecurityChoices',
     'SNMPVersionChoices',
+    'ZabbixHostInterfaceTypeChoices',
+    'ZabbixHostInterfaceConnectionChoices',
+    #'ZabbixHostInterface'
 )

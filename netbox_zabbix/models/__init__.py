@@ -1,8 +1,14 @@
-from .device import *
 from .zabbix import *
 
 
 __all__ = (
+    'ZabbixServer',
+    'ZabbixProxy',
+    'ZabbixProxyGroup',
     'ZabbixHost',
-    'ZabbixDevice',
+    'ZabbixHostGroup',
+    'ZabbixHostInterface',
+    'ZabbixHostInterfaceSNMP',
+    'ZabbixHostTemplate',
+    'ZabbixTemplate',
 )

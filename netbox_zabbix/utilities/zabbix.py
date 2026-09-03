@@ -1,6 +1,6 @@
 import logging
 
-from dcim.models import Device
+from dcim.models import Device, VirtualDeviceContext
 from netbox import settings
 from netbox_zabbix.utilities.helper import snmp_details
 
@@ -28,6 +28,10 @@ def update_hostid(zabbix, device, name=None):
 
 def update_zabbix(instance, hostid=None):
 
+    device = instance
+    if isinstance(instance, VirtualDeviceContext):
+        device = instance.device
+
     status = 0
     if instance.status in ['offline', 'planned', 'inventory', 'staged', 'decommissioning']:
         status = 1
@@ -41,7 +45,7 @@ def update_zabbix(instance, hostid=None):
             old_name = instance.name
     try:
         zabbix = Zabbix()
-        snmp = snmp_details(device=instance)
+        snmp = snmp_details(instance=instance)
         hostid = instance.custom_field_data.get('zabbix_hostid', None)
 
         if not hostid:
@@ -53,6 +57,8 @@ def update_zabbix(instance, hostid=None):
 
         if isinstance(instance, Device):
             template = zabbix.template_get(instance.device_type.full_name)
+        elif isinstance(instance, VirtualDeviceContext):
+            template = zabbix.template_get(instance.device.device_type.full_name)
         else:
             template = zabbix.template_get(instance.platform.name)
 
@@ -67,9 +73,9 @@ def update_zabbix(instance, hostid=None):
                 )
 
 
-        group = instance.get_config_context().get('zabbix', {}).get('groups', [])
-        group.extend(instance.get_config_context().get('zabbix', {}).get('tenants', []))
-        group.extend(instance.get_config_context().get('zabbix', {}).get('locations', []))
+        group = device.get_config_context().get('zabbix', {}).get('groups', [])
+        group.extend(device.get_config_context().get('zabbix', {}).get('tenants', []))
+        group.extend(device.get_config_context().get('zabbix', {}).get('locations', []))
         logger.info(f'Zabbix({instance.name}): Selected Groups')
         groups = []
         if isinstance(instance, Device) and instance.virtual_chassis and instance.virtual_chassis.name:

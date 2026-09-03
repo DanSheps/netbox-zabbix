@@ -31,14 +31,14 @@ class JSONRPC:
     def send_api_request(self, data):
         if not data.get('id', None):
             data['id'] = self.id
-        if not data.get('token', None):
-            data['auth'] = self.token
         if not data.get('jsonrpc', None):
             data['jsonrpc'] = '2.0'
 
         headers = {
             'Content-Type': 'application/json-rpc',
         }
+        if self.token:
+            headers['Authorization'] = f'Bearer {self.token}'
         body = json.dumps(data, cls=json.JSONEncoder)
         # Prepare the HTTP request
         params = {
@@ -96,8 +96,9 @@ class JSONRPC:
                 'password': self.password
             },
             'id': self.id,
-            'auth': self.token
         }
+        if self.token:
+            data.update({'auth': self.token})
         response = self.send_api_request(data)
 
         result = response.json()
@@ -111,8 +112,9 @@ class JSONRPC:
             'method': 'user.logout',
             'params': [],
             'id': self.id,
-            'auth': self.token
         }
+        if self.token:
+            data.update({'auth': self.token})
         response = self.send_api_request(data)
 
         result = response.json()
