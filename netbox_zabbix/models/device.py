@@ -18,11 +18,11 @@ class ZabbixDevice(NetBoxModel):
     sync = models.BooleanField()
 
     class Meta:
-        ordering = ['device']
+        ordering = ('device', 'pk', )
         constraints = ()
 
     def __str__(self):
         return f'{self.device.name}'
 
     def get_absolute_url(self):
-        return reverse('plugins:netbox_zabbix:zabbixdevice', args=[self.pk])\
+        return reverse('plugins:netbox_zabbix:zabbixdevice', args=[self.pk])
