@@ -276,8 +276,6 @@ class SystemSyncZabbixHostInterface(SyncZabbixSyncMixin, JobInstanceMixin, JobRu
                 instance.ip.save()
             except IPAddress.MultipleObjectsReturned:
                 self.logger.info(f'Multiple IPs found for {ip}')
-                # self.logger.info(f'\t{IPAddress.objects.filter(address__startswith=f"{ip}/")}')
-                instance.ip = IPAddress.objects.filter(address__startswith=f'{ip}/').first()
 
         return instance
 
