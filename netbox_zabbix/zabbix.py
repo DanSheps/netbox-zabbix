@@ -147,6 +147,32 @@ class Zabbix:
 
         return result.get('result', []).pop()
 
+    def proxyid_get(self, hostid=None):
+        """Return the proxyid a host is bound to.
+
+        Zabbix 7.0.26 host.get does not expose proxy_hostid in the output
+        (returns None even for admin roles), but proxy.get with selectHosts
+        does. Build a hostid -> proxyid map from all proxies to resolve the
+        binding reliably. The map is cached per instance to avoid one
+        proxy.get call per host during bulk syncs.
+        """
+        if not hasattr(self, '_proxy_host_map'):
+            self._proxy_host_map = {}
+            data = {
+                'method': 'proxy.get',
+                'params': {
+                    'output': ['proxyid', 'name'],
+                    'selectHosts': ['hostid', 'host'],
+                },
+            }
+            response = self.jsonrpc.send_api_request(data)
+            for proxy in response.json().get('result', []):
+                for host in proxy.get('hosts', []):
+                    self._proxy_host_map[host['hostid']] = proxy['proxyid']
+        if hostid:
+            return self._proxy_host_map.get(str(hostid))
+        return None
+
     def host_create(self, name, ip, templates, groups, type=2, main=1, port=161, snmp={}, status=0, inventory=None):
         host = self.host_get(host=name)
 
@@ -163,6 +189,12 @@ class Zabbix:
             }
             if inventory:
                 data['params']['inventory'] = inventory
+            # Assign proxy on create if configured (avoids hosts landing on the server).
+            # Zabbix 7.0 uses monitored_by + proxyid (proxy_hostid was removed).
+            cfg_proxy = settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('proxy', None)
+            if cfg_proxy:
+                data['params']['monitored_by'] = 1
+                data['params']['proxyid'] = cfg_proxy
             if ip:
                 data['params'].update(self.build_interface(snmp=snmp, ip=ip))
             # SNMP community: from config context or default public
@@ -198,11 +230,18 @@ class Zabbix:
                 # Zabbix 7.0 API ignores name/model/serialno_a/location on host.update;
                 # only inventory_mode=1 hosts accept the rest. Pass what is writable.
                 data['params']['inventory'] = inventory
-            # Preserve proxy binding: if the host is already on a proxy, do not reset proxy_hostid
-            # (host.update without proxy_hostid resets it to 0)
-            current_proxy = host.get('proxy_hostid')
-            if current_proxy:
-                data['params']['proxy_hostid'] = current_proxy
+            # Preserve proxy binding. In Zabbix 7.0 the parameter is
+            # monitored_by=1 + proxyid (proxy_hostid no longer exists, and
+            # host.get does not expose it). Resolve the real proxyid via
+            # proxy.get selectHosts.
+            cfg_proxy = settings.PLUGINS_CONFIG.get('netbox_zabbix', {}).get('proxy', None)
+            if cfg_proxy:
+                proxy_id = cfg_proxy
+            else:
+                proxy_id = self.proxyid_get(hostid=hostid)
+            if proxy_id:
+                data['params']['monitored_by'] = 1
+                data['params']['proxyid'] = proxy_id
             if snmp:
                 data['params'].update(self.build_macro('SNMP_COMMUNITY', snmp.get('community', None)))
             response = self.jsonrpc.send_api_request(data)
