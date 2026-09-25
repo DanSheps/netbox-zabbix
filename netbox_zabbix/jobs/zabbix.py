@@ -7,6 +7,7 @@ from django.db import models
 
 from dcim.models import Device, VirtualDeviceContext, VirtualChassis
 from ipam.models import IPAddress
+from netbox.config import get_config
 from netbox.context_managers import event_tracking
 from netbox.jobs import JobRunner, system_job
 from netbox_zabbix.choices import (
@@ -220,6 +221,9 @@ class SyncZabbixHostMixin:
 @system_job(interval=1440)
 class SystemSyncZabbixProxyGroups(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
     def run(self, data=None, commit=True, *args, **kwargs):
+        if get_config().DEBUG:
+            self.logger.info("DEBUG mode enabled, Skipping")
+            return
         with event_tracking(request=None):
             self.sync(model=ZabbixProxyGroup)
 
@@ -227,6 +231,9 @@ class SystemSyncZabbixProxyGroups(SyncZabbixSyncMixin, JobInstanceMixin, JobRunn
 @system_job(interval=1440)
 class SystemSyncZabbixProxies(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
     def run(self, data=None, commit=True, *args, **kwargs):
+        if get_config().DEBUG:
+            self.logger.info("DEBUG mode enabled, Skipping")
+            return
         with event_tracking(request=None):
             self.sync(model=ZabbixProxy)
 
@@ -234,6 +241,9 @@ class SystemSyncZabbixProxies(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
 @system_job(interval=1440)
 class SystemSyncZabbixHostGroups(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
     def run(self, data=None, commit=True, *args, **kwargs):
+        if get_config().DEBUG:
+            self.logger.info("DEBUG mode enabled, Skipping")
+            return
         with event_tracking(request=None):
             self.sync(model=ZabbixHostGroup)
 
@@ -241,6 +251,9 @@ class SystemSyncZabbixHostGroups(SyncZabbixSyncMixin, JobInstanceMixin, JobRunne
 @system_job(interval=1440)
 class SystemSyncZabbixTemplates(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
     def run(self, data=None, commit=True, *args, **kwargs):
+        if get_config().DEBUG:
+            self.logger.info("DEBUG mode enabled, Skipping")
+            return
         with event_tracking(request=None):
             self.sync(model=ZabbixTemplate)
 
@@ -251,6 +264,8 @@ class SystemSyncZabbixHost(
 ):
 
     def run(self, data=None, commit=True, *args, **kwargs):
+        if get_config().DEBUG:
+            return
         with event_tracking(request=None):
             self.sync(model=ZabbixHost)
 
@@ -294,5 +309,8 @@ class SystemSyncZabbixHostInterface(SyncZabbixSyncMixin, JobInstanceMixin, JobRu
                 snmp.save()
 
     def run(self, data=None, commit=True, *args, **kwargs):
+        if get_config().DEBUG:
+            self.logger.info("DEBUG mode enabled, Skipping")
+            return
         with event_tracking(request=None):
             self.sync(model=ZabbixHostInterface)
