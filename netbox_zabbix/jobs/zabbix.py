@@ -286,9 +286,10 @@ class SystemSyncZabbixHostInterface(SyncZabbixSyncMixin, JobInstanceMixin, JobRu
             try:
                 instance.ip = IPAddress.objects.get(address__startswith=f'{ip}/')
             except IPAddress.DoesNotExist:
-                instance.ip = IPAddress(address=f'{ip}/24')
-                instance.ip.full_clean()
-                instance.ip.save()
+                ip = IPAddress(address=f'{ip}/24')
+                ip.full_clean()
+                ip.save()
+                instance.ip = ip
             except IPAddress.MultipleObjectsReturned:
                 self.logger.info(f'Multiple IPs found for {ip}')
 
