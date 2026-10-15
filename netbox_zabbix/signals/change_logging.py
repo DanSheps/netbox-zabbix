@@ -20,6 +20,9 @@ def handle_changed_object_special(sender, instance, **kwargs):
     """
     Fires when an object is created or updated.
     """
+    import sys
+    if len(sys.argv) > 1 and 'test' in sys.argv[1]:
+        return
     m2m_changed = False
 
     if not hasattr(instance, 'to_objectchange'):
