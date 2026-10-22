@@ -45,6 +45,14 @@ class ZabbixPlugin(PluginConfig):
             pass
 
         try:
+            from netbox_zabbix.jobs.sync_push import (
+                SystemSyncNetBoxDeviceToZabbix,
+                SystemSyncNetBoxVirtualMachineToZabbix,
+            )
+        except ImportError:
+            pass
+
+        try:
             from netbox_zabbix.signals.change_logging import (
                 handle_changed_object_special,
             )

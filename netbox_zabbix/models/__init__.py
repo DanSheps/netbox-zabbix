@@ -1,4 +1,5 @@
 from .zabbix import *
+from .device import *
 
 
 __all__ = (
@@ -11,4 +12,6 @@ __all__ = (
     'ZabbixHostInterfaceSNMP',
     'ZabbixHostTemplate',
     'ZabbixTemplate',
+    'ZabbixDevice',
+    'ZabbixVirtualMachine',
 )

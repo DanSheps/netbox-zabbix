@@ -9,4 +9,6 @@ __all__ = (
     'ZabbixProxySerializer',
     'ZabbixServerSerializer',
     'ZabbixTemplateSerializer',
+    'ZabbixDeviceSerializer',
+    'ZabbixVirtualMachineSerializer',
 )
