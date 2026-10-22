@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from dcim.models import Device
-from netbox.filtersets import PrimaryModelFilterSet
+from netbox.filtersets import NetBoxModelFilterSet
 from utilities.filtersets import register_filterset
 from virtualization.models import VirtualMachine
 
@@ -13,7 +13,6 @@ from netbox_zabbix.models import (
     ZabbixHost,
 )
 
-
 __all__ = (
     'ZabbixDeviceFilterSet',
     'ZabbixVirtualMachineFilterSet',
@@ -21,8 +20,9 @@ __all__ = (
 
 
 @register_filterset
-class ZabbixDeviceFilterSet(PrimaryModelFilterSet):
+class ZabbixDeviceFilterSet(NetBoxModelFilterSet):
     """FilterSet for ZabbixDevice objects."""
+
     device_id = django_filters.ModelMultipleChoiceFilter(
         field_name='device',
         queryset=Device.objects.all(),
@@ -69,8 +69,9 @@ class ZabbixDeviceFilterSet(PrimaryModelFilterSet):
 
 
 @register_filterset
-class ZabbixVirtualMachineFilterSet(PrimaryModelFilterSet):
+class ZabbixVirtualMachineFilterSet(NetBoxModelFilterSet):
     """FilterSet for ZabbixVirtualMachine objects."""
+
     virtual_machine_id = django_filters.ModelMultipleChoiceFilter(
         field_name='virtual_machine',
         queryset=VirtualMachine.objects.all(),
@@ -114,7 +115,3 @@ class ZabbixVirtualMachineFilterSet(PrimaryModelFilterSet):
         qs_filter |= Q(description__icontains=value)
 
         return queryset.filter(qs_filter)
-
-
-
-

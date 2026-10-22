@@ -9,6 +9,4 @@ __all__ = (
     'ZabbixProxyGroupFilterSet',
     'ZabbixServerFilterSet',
     'ZabbixTemplateFilterSet',
-    'ZabbixDeviceFilterSet',
-    'ZabbixVirtualMachineFilterSet',
 )

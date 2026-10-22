@@ -105,6 +105,11 @@ class ZabbixHost(JobsMixin, ZabbixID, PrimaryModel):
     assigned_object = GenericForeignKey(
         ct_field='assigned_object_type', fk_field='assigned_object_id'
     )
+    last_synced = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_('Last synchronization timestamp'),
+    )
 
     class Meta:
         ordering = (

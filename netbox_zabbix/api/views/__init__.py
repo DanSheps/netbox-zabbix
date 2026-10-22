@@ -1,7 +1,6 @@
 from .host import *
 from .server import *
 from .template import *
-from .device import *
 
 __all__ = (
     'ZabbixHostGroupViewSet',
@@ -12,6 +11,4 @@ __all__ = (
     'ZabbixProxyViewSet',
     'ZabbixServerViewSet',
     'ZabbixTemplateViewSet',
-    'ZabbixDeviceViewSet',
-    'ZabbixVirtualMachineViewSet',
 )

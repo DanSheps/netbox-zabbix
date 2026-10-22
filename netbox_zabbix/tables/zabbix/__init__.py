@@ -1,7 +1,6 @@
 from .server import *
 from .host import *
 from .template import *
-from .device import *
 
 __all__ = (
     'ZabbixServerTable',
@@ -12,6 +11,4 @@ __all__ = (
     'ZabbixManagedHostTemplateTable',
     'ZabbixProxyTable',
     'ZabbixProxyGroupTable',
-    'ZabbixDeviceTable',
-    'ZabbixVirtualMachineTable',
 )
