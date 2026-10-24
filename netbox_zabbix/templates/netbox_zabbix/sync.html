@@ -1,0 +1,39 @@
+{% extends 'base/layout.html' %}
+
+{% block title %}
+    Sync {{ model_name }}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Sync {{ model_name }} from Zabbix</h5>
+            </div>
+            <div class="card-body">
+                <p>
+                    This action will queue a background job to synchronize {{ model_name }}
+                    from all configured Zabbix servers. The sync will run in the background
+                    and you can monitor its progress in the Jobs section.
+                </p>
+                <div class="alert alert-info" role="alert">
+                    <strong>Note:</strong> Syncing may take some time depending on the number of objects.
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-cloud-download"></i> Start Sync
+                        </button>
+                        <a href="{{ request.GET.return_url|default:'/' }}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

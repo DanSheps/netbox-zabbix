@@ -22,8 +22,7 @@ from netbox.ui.panels import (
     TemplatePanel,
 )
 from extras.ui.panels import CustomFieldsPanel, ImageAttachmentsPanel, TagsPanel
-from utilities.views import register_model_view, ViewTab
-
+from utilities.views import ViewTab, register_model_view
 
 from netbox_zabbix.models import (
     ZabbixServer,
@@ -35,6 +34,7 @@ from netbox_zabbix.models import (
 )
 from netbox_zabbix import filtersets, forms, tables
 from netbox_zabbix.ui import ZabbixServerPanel, ZabbixProxyGroupPanel, ZabbixProxyPanel
+from netbox_zabbix.ui.actions.sync import SyncObject
 
 __all__ = (
     "ZabbixServerListView",
@@ -146,6 +146,7 @@ class ZabbixServerTemplateListView(ObjectChildrenView):
 
 @register_model_view(ZabbixProxyGroup, name="list", path="", detail=False)
 class ZabbixProxyGroupListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixProxyGroup.objects.all()
 
     filterset = filtersets.ZabbixProxyGroupFilterSet
@@ -242,6 +243,7 @@ class ZabbixProxyGroupTemplateListView(ObjectChildrenView):
 
 @register_model_view(ZabbixProxy, name="list", path="", detail=False)
 class ZabbixProxyListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixProxy.objects.all()
 
     filterset = filtersets.ZabbixProxyFilterSet

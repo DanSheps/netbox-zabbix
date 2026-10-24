@@ -8,10 +8,7 @@ navs = (
     ('Zabbix', (ZabbixServer, ZabbixProxyGroup, ZabbixProxy)),
     (
         'Templates',
-        (
-            ZabbixTemplate,
-            ZabbixHostTemplate,
-        ),
+        (ZabbixTemplate,),
     ),
     (
         'Hosts',

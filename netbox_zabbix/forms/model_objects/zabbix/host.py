@@ -14,7 +14,7 @@ from dcim.models import (
     DeviceRole,
 )
 from extras.models import Tag
-from netbox.forms import PrimaryModelForm
+from netbox.forms import PrimaryModelForm, NetBoxModelForm
 from netbox_zabbix.choices import (
     ZabbixHostInterfaceTypeChoices,
     ZabbixHostInterfaceConnectionChoices,
@@ -34,6 +34,7 @@ __all__ = (
     'ZabbixHostGroupForm',
     'ZabbixHostForm',
     'ZabbixHostInterfaceForm',
+    'ZabbixHostInterfaceSNMPForm',
     'ZabbixManagedHostTemplateForm',
 )
 
@@ -128,7 +129,7 @@ class ZabbixHostForm(PrimaryModelForm):
         FieldSet(
             TabbedGroups(
                 FieldSet('device', name=_('Device')),
-                FieldSet('vc', name=_('Chassis')),
+                FieldSet('vc', name=_('Virtual Chassis')),
                 FieldSet('vdc', name=_('VDC')),
                 FieldSet(
                     'virtual_machine',
@@ -224,10 +225,17 @@ class ZabbixHostForm(PrimaryModelForm):
 
 class ZabbixHostInterfaceForm(PrimaryModelForm):
     server = DynamicModelChoiceField(
+        queryset=ZabbixServer.objects.all(),
+        required=True,
+        selector=True,
+        label=_('Zabbix Server'),
+    )
+    host = DynamicModelChoiceField(
         queryset=ZabbixHost.objects.all(),
         required=True,
         selector=True,
         label=_('Zabbix Host'),
+        query_params={'server_id': '$server'},
     )
     type = forms.ChoiceField(
         choices=ZabbixHostInterfaceTypeChoices,
@@ -244,6 +252,7 @@ class ZabbixHostInterfaceForm(PrimaryModelForm):
 
     fieldsets = (
         FieldSet(
+            'server',
             'host',
             'type',
             'connection',
@@ -257,6 +266,7 @@ class ZabbixHostInterfaceForm(PrimaryModelForm):
     class Meta:
         model = ZabbixHostInterface
         fields = (
+            'server',
             'host',
             'type',
             'connection',
@@ -267,6 +277,48 @@ class ZabbixHostInterfaceForm(PrimaryModelForm):
             'comments',
             'owner',
             'tags',
+        )
+
+
+class ZabbixHostInterfaceSNMPForm(NetBoxModelForm):
+    interface = DynamicModelChoiceField(
+        queryset=ZabbixHostInterface.objects.all(),
+        required=True,
+        selector=True,
+        label=_('Zabbix Host Interface'),
+        disabled=True,
+    )
+
+    fieldsets = (
+        FieldSet(
+            'interface',
+        ),
+        FieldSet(
+            'version',
+            'community',
+            'context_name',
+            'security_name',
+            'security_level',
+            'auth_protocol',
+            'auth_passphrase',
+            'priv_protocol',
+            'priv_passphrase',
+        ),
+    )
+
+    class Meta:
+        model = ZabbixHostInterfaceSNMP
+        fields = (
+            'interface',
+            'version',
+            'community',
+            'context_name',
+            'security_name',
+            'security_level',
+            'auth_protocol',
+            'auth_passphrase',
+            'priv_protocol',
+            'priv_passphrase',
         )
 
 

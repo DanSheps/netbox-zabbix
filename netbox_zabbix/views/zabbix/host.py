@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 from dcim.models import (
     Region,
     SiteGroup,
@@ -31,7 +33,15 @@ from netbox.ui.panels import (
     TemplatePanel,
 )
 from extras.ui.panels import CustomFieldsPanel, ImageAttachmentsPanel, TagsPanel
-from utilities.views import register_model_view, ViewTab, GetRelatedModelsMixin
+from netbox_zabbix.ui.actions.host import AddOrEditInterface
+from netbox_zabbix.ui.actions.sync import SyncObject
+from utilities.permissions import get_permission_for_model
+from utilities.views import (
+    register_model_view,
+    ViewTab,
+    GetRelatedModelsMixin,
+    get_viewname,
+)
 
 from netbox_zabbix.models import (
     ZabbixServer,
@@ -42,6 +52,7 @@ from netbox_zabbix.models import (
     ZabbixHost,
     ZabbixHostInterface,
     ZabbixHostTemplate,
+    ZabbixHostInterfaceSNMP,
 )
 from netbox_zabbix import filtersets, forms, tables
 from netbox_zabbix.ui import (
@@ -68,6 +79,7 @@ from virtualization.models import ClusterType, ClusterGroup, Cluster
 
 @register_model_view(ZabbixHostGroup, name="list", path="", detail=False)
 class ZabbixHostGroupListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixHostGroup.objects.all()
 
     filterset = filtersets.ZabbixHostGroupFilterSet
@@ -89,6 +101,25 @@ class ZabbixHostGroupView(ObjectView):
         ],
         right_panels=[],
     )
+
+
+@register_model_view(ZabbixHostGroup, name='hosts')
+class ZabbixHostGroupHostsListView(ObjectChildrenView):
+    queryset = ZabbixHostGroup.objects.all()
+    child_model = ZabbixHost
+    table = tables.ZabbixHostTable
+    filterset = filtersets.ZabbixHostFilterSet
+    filterset_form = forms.ZabbixHostFilterForm
+    actions = ObjectChildrenView.actions
+    tab = ViewTab(
+        label='Hosts',
+        badge=lambda obj: ZabbixHostGroupHostsListView.child_model.objects.filter(
+            groups=obj
+        ).count(),
+    )
+
+    def get_children(self, request, parent):
+        return self.child_model.objects.filter(groups=parent)
 
 
 @register_model_view(ZabbixHostGroup, name="add", detail=False)
@@ -126,6 +157,7 @@ class ZabbixHostGroupBulkDeleteView(BulkDeleteView):
 
 @register_model_view(ZabbixHost, name="list", path="", detail=False)
 class ZabbixHostListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixHost.objects.all()
 
     filterset = filtersets.ZabbixHostFilterSet
@@ -147,6 +179,25 @@ class ZabbixHostView(ObjectView):
         ],
         right_panels=[],
     )
+
+
+@register_model_view(ZabbixHost, name='interfaces')
+class ZabbixHostInterfacesListView(ObjectChildrenView):
+    queryset = ZabbixHost.objects.all()
+    child_model = ZabbixHostInterface
+    table = tables.ZabbixHostInterfaceTable
+    filterset = filtersets.ZabbixHostInterfaceFilterSet
+    filterset_form = forms.ZabbixHostInterfaceFilterForm
+    actions = ObjectChildrenView.actions
+    tab = ViewTab(
+        label='Interfaces',
+        badge=lambda obj: ZabbixHostInterfacesListView.child_model.objects.filter(
+            host=obj
+        ).count(),
+    )
+
+    def get_children(self, request, parent):
+        return self.child_model.objects.filter(host=parent)
 
 
 @register_model_view(ZabbixHost, name="add", detail=False)
@@ -184,6 +235,7 @@ class ZabbixHostBulkDeleteView(BulkDeleteView):
 
 @register_model_view(ZabbixHostInterface, name="list", path="", detail=False)
 class ZabbixHostInterfaceListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixHostInterface.objects.all()
 
     filterset = filtersets.ZabbixHostInterfaceFilterSet
@@ -199,7 +251,12 @@ class ZabbixHostInterfaceView(ObjectView):
     layout = layout.SimpleLayout(
         left_panels=[
             ZabbixHostInterfacePanel(),
-            ZabbixHostSNMPInterfacePanel(accessor='object.snmp'),
+            ZabbixHostSNMPInterfacePanel(
+                accessor='object.snmp',
+                actions=(
+                    AddOrEditInterface(parent=lambda ctx: ctx['parent_interface']),
+                ),
+            ),
             CustomFieldsPanel(),
             TagsPanel(),
             CommentsPanel(),
@@ -241,8 +298,16 @@ class ZabbixHostInterfaceBulkDeleteView(BulkDeleteView):
     table = tables.ZabbixHostInterfaceTable
 
 
+@register_model_view(ZabbixHostInterfaceSNMP, name="add", detail=False)
+@register_model_view(ZabbixHostInterfaceSNMP, name="edit")
+class ZabbixHostInterfaceSNMPEditView(ObjectEditView):
+    queryset = ZabbixHostInterfaceSNMP.objects.all()
+    form = forms.ZabbixHostInterfaceSNMPForm
+
+
 @register_model_view(ZabbixHostTemplate, name="list", path="", detail=False)
 class ZabbixManagedHostTemplateListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixHostTemplate.objects.all()
 
     filterset = None

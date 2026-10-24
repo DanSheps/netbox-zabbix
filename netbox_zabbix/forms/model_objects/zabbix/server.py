@@ -8,7 +8,11 @@ from utilities.forms.fields import (
 
 from netbox_zabbix.models import ZabbixServer, ZabbixProxy, ZabbixProxyGroup
 
-__all__ = ('ZabbixServerForm', 'ZabbixProxyGroupForm', 'ZabbixProxyForm')
+__all__ = (
+    'ZabbixServerForm',
+    'ZabbixProxyGroupForm',
+    'ZabbixProxyForm',
+)
 
 from utilities.forms.rendering import FieldSet
 

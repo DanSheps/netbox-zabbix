@@ -1,6 +1,15 @@
 from .zabbix import *
 
 __all__ = (
-    'update_zabbix_device',
-    'update_zabbix_vm',
+    'SystemSyncZabbixProxyGroups',
+    'SystemSyncZabbixProxies',
+    'SystemSyncZabbixHostGroups',
+    'SystemSyncZabbixTemplates',
+    'SystemSyncZabbixHost',
+    'SystemSyncZabbixHostInterface',
+    'ManualSyncZabbixProxyGroups',
+    'ManualSyncZabbixProxies',
+    'ManualSyncZabbixHostGroups',
+    'ManualSyncZabbixTemplates',
+    'ManualSyncZabbixHost',
 )

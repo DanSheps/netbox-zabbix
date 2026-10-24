@@ -18,7 +18,19 @@ from netbox_zabbix.jobs.mixins import JobInstanceMixin
 from netbox_zabbix.models import *
 from netbox_zabbix.utilities import has_changes
 
-__all__ = ('SystemSyncZabbixHostGroups',)
+__all__ = (
+    'SystemSyncZabbixProxyGroups',
+    'SystemSyncZabbixProxies',
+    'SystemSyncZabbixHostGroups',
+    'SystemSyncZabbixTemplates',
+    'SystemSyncZabbixHost',
+    'SystemSyncZabbixHostInterface',
+    'ManualSyncZabbixProxyGroups',
+    'ManualSyncZabbixProxies',
+    'ManualSyncZabbixHostGroups',
+    'ManualSyncZabbixTemplates',
+    'ManualSyncZabbixHost',
+)
 
 from virtualization.models import VirtualMachine
 
@@ -315,3 +327,68 @@ class SystemSyncZabbixHostInterface(SyncZabbixSyncMixin, JobInstanceMixin, JobRu
             return
         with event_tracking(request=None):
             self.sync(model=ZabbixHostInterface)
+
+
+# Manual Sync Job Classes
+# These jobs can be queued manually for on-demand synchronization
+
+class ManualSyncZabbixProxyGroups(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
+    """Manual sync job for Zabbix Proxy Groups"""
+    class Meta:
+        name = 'Manual Sync Zabbix Proxy Groups'
+        description = 'Manually synchronize Zabbix Proxy Groups from Zabbix servers'
+        task_queues = ['default']
+
+    def run(self, data=None, commit=True, *args, **kwargs):
+        """Execute the manual sync for proxy groups"""
+        self.sync(model=ZabbixProxyGroup)
+
+
+class ManualSyncZabbixProxies(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
+    """Manual sync job for Zabbix Proxies"""
+    class Meta:
+        name = 'Manual Sync Zabbix Proxies'
+        description = 'Manually synchronize Zabbix Proxies from Zabbix servers'
+        task_queues = ['default']
+
+    def run(self, data=None, commit=True, *args, **kwargs):
+        """Execute the manual sync for proxies"""
+        self.sync(model=ZabbixProxy)
+
+
+class ManualSyncZabbixHostGroups(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
+    """Manual sync job for Zabbix Host Groups"""
+    class Meta:
+        name = 'Manual Sync Zabbix Host Groups'
+        description = 'Manually synchronize Zabbix Host Groups from Zabbix servers'
+        task_queues = ['default']
+
+    def run(self, data=None, commit=True, *args, **kwargs):
+        """Execute the manual sync for host groups"""
+        self.sync(model=ZabbixHostGroup)
+
+
+class ManualSyncZabbixTemplates(SyncZabbixSyncMixin, JobInstanceMixin, JobRunner):
+    """Manual sync job for Zabbix Templates"""
+    class Meta:
+        name = 'Manual Sync Zabbix Templates'
+        description = 'Manually synchronize Zabbix Templates from Zabbix servers'
+        task_queues = ['default']
+
+    def run(self, data=None, commit=True, *args, **kwargs):
+        """Execute the manual sync for templates"""
+        self.sync(model=ZabbixTemplate)
+
+
+class ManualSyncZabbixHost(
+    SyncZabbixHostMixin, SyncZabbixSyncMixin, JobInstanceMixin, JobRunner
+):
+    """Manual sync job for Zabbix Hosts"""
+    class Meta:
+        name = 'Manual Sync Zabbix Hosts'
+        description = 'Manually synchronize Zabbix Hosts from Zabbix servers'
+        task_queues = ['default']
+
+    def run(self, data=None, commit=True, *args, **kwargs):
+        """Execute the manual sync for hosts"""
+        self.sync(model=ZabbixHost)

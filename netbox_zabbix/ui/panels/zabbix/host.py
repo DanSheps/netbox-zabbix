@@ -1,5 +1,7 @@
 # from django.contrib.contenttypes.models import ContentType
 # from django.template.loader import render_to_string
+import logging
+
 from django.utils.translation import gettext_lazy as _
 
 from netbox.ui import actions, attrs, panels
@@ -13,6 +15,7 @@ __all__ = (
     'ZabbixHostSNMPInterfacePanel',
     'ZabbixManagedHostTemplatePanel',
 )
+logger = logging.getLogger('netbox.plugins.netbox_zabbix.ui.panels.hosts')
 
 
 class ZabbixHostGroupPanel(ZabbixIDPanel, panels.ObjectAttributesPanel):
@@ -34,6 +37,10 @@ class ZabbixHostInterfacePanel(ZabbixIDPanel, panels.ObjectAttributesPanel):
     port = attrs.TextAttr('port')
     description = attrs.TextAttr('description')
 
+    def render(self, context):
+        logger.debug(self.get_context(context))
+        return super().render(context)
+
 
 class ZabbixHostSNMPInterfacePanel(panels.ObjectAttributesPanel):
     version = attrs.TextAttr('version')
@@ -45,6 +52,12 @@ class ZabbixHostSNMPInterfacePanel(panels.ObjectAttributesPanel):
     auth_passphrase = attrs.TextAttr('auth_passphrase')
     privacy_protocol = attrs.TextAttr('privacy_protocol')
     privacy_passphrase = attrs.TextAttr('privacy_passphrase')
+
+    def get_context(self, context):
+        return {
+            **super().get_context(context),
+            'parent_interface': context['object'],
+        }
 
 
 class ZabbixManagedHostTemplatePanel(ZabbixIDPanel, panels.ObjectAttributesPanel):

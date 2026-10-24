@@ -11,6 +11,7 @@ from netbox_zabbix.models import *
 __all__ = (
     'ZabbixHostGroupFilterForm',
     'ZabbixHostFilterForm',
+    'ZabbixHostInterfaceFilterForm',
 )
 
 
@@ -79,5 +80,34 @@ class ZabbixHostFilterForm(PrimaryModelFilterSetForm):
         required=False,
         selector=True,
         label=_("Host Groups"),
+    )
+    tag = TagFilterField(model)
+
+
+class ZabbixHostInterfaceFilterForm(PrimaryModelFilterSetForm):
+    model = ZabbixHostInterface
+    fieldsets = (
+        FieldSet(
+            'q',
+            'filter_id',
+        ),
+        FieldSet(
+            'host_id',
+            'server_id',
+        ),
+        FieldSet('tag', name=_('Tags')),
+    )
+
+    server_id = DynamicModelMultipleChoiceField(
+        queryset=ZabbixServer.objects.all(),
+        required=False,
+        selector=True,
+        label=_("Servers"),
+    )
+    host_id = DynamicModelMultipleChoiceField(
+        queryset=ZabbixHost.objects.all(),
+        required=False,
+        selector=True,
+        label=_("Hosts"),
     )
     tag = TagFilterField(model)

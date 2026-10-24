@@ -157,6 +157,10 @@ class ZabbixHost(JobsMixin, ZabbixID, PrimaryModel):
             return f'{self.assigned_object.name}'
         return ''
 
+    @property
+    def name(self):
+        return str(self)
+
 
 class ZabbixHostInterface(JobsMixin, ZabbixID, PrimaryModel):
     host = models.ForeignKey(
@@ -396,6 +400,9 @@ class ZabbixHostInterfaceSNMP(NetBoxModel):
 
     def __str__(self):
         return f'{self.interface}'
+
+    def get_absolute_url(self):
+        return self.interface.get_absolute_url()
 
 
 class ZabbixHostTemplate(PrimaryModel):

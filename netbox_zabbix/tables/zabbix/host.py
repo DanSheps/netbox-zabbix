@@ -42,6 +42,11 @@ class ZabbixHostGroupTable(ZabbixMixin, PrimaryModelTable):
 
 
 class ZabbixHostTable(ZabbixMixin, PrimaryModelTable):
+    name = tables.Column(
+        orderable=False,
+        verbose_name=_('Name'),
+        linkify=True,
+    )
     server = tables.Column(
         linkify=True,
         verbose_name=_('Server'),
@@ -50,17 +55,37 @@ class ZabbixHostTable(ZabbixMixin, PrimaryModelTable):
         linkify_item=True,
         verbose_name=_('Groups'),
     )
+    assigned_object_type = tables.Column(
+        verbose_name=_('Assigned object type'),
+        linkify=True,
+    )
+    assigned_object_id = tables.Column(
+        verbose_name=_('Assigned object id'),
+        linkify=True,
+    )
     assigned_object = tables.Column(
         orderable=False,
         verbose_name=_('Assigned object'),
+        linkify=True,
     )
 
     class Meta(NetBoxTable.Meta):
         model = ZabbixHost
-        fields = ('pk', 'id', 'zid', 'server', 'assigned_object', 'groups')
+        fields = (
+            'pk',
+            'id',
+            'zid',
+            'name',
+            'server',
+            'assigned_object_type',
+            'assigned_object_id',
+            'assigned_object',
+            'groups',
+        )
         default_columns = (
             'pk',
             'id',
+            'name',
             'assigned_object',
         )
 

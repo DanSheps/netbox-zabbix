@@ -21,13 +21,17 @@ from netbox.ui.panels import (
 )
 from extras.ui.panels import CustomFieldsPanel, TagsPanel
 from netbox_zabbix.ui import ZabbixTemplatePanel
+from netbox_zabbix.ui.actions.sync import SyncObject
 from utilities.views import register_model_view
 
-from netbox_zabbix.forms import ZabbixTemplateForm, ZabbixTemplateFilterForm, ZabbixTemplateBulkEditForm
+from netbox_zabbix.forms import (
+    ZabbixTemplateForm,
+    ZabbixTemplateFilterForm,
+    ZabbixTemplateBulkEditForm,
+)
 from netbox_zabbix.models import ZabbixTemplate
 from netbox_zabbix.tables import ZabbixTemplateTable
 from netbox_zabbix.filtersets import ZabbixTemplateFilterSet
-
 
 __all__ = (
     "ZabbixTemplateListView",
@@ -41,6 +45,7 @@ __all__ = (
 
 @register_model_view(ZabbixTemplate, name="list", path="", detail=False)
 class ZabbixTemplateListView(ObjectListView):
+    actions = ObjectListView.actions + (SyncObject,)
     queryset = ZabbixTemplate.objects.all()
 
     filterset = ZabbixTemplateFilterSet
@@ -76,8 +81,8 @@ class ZabbixTemplateDeleteView(ObjectDeleteView):
     queryset = ZabbixTemplate.objects.all()
 
 
-#@register_model_view(ZabbixTemplate, name='bulk_import', detail=False)
-#class ZabbixTemplateImportView(BulkImportView):
+# @register_model_view(ZabbixTemplate, name='bulk_import', detail=False)
+# class ZabbixTemplateImportView(BulkImportView):
 #    queryset = ZabbixTemplate.objects.all()
 #    model_form = ZabbixTemplateBulkImportForm
 
@@ -95,5 +100,3 @@ class ZabbixTemplateBulkDeleteView(BulkDeleteView):
     filterset = ZabbixTemplateFilterSet
     queryset = ZabbixTemplate.objects.all()
     table = ZabbixTemplateTable
-
-
